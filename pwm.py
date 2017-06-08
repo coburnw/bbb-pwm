@@ -14,7 +14,7 @@ import glob
 
 class Pwm(object):
     def __init__(self):
-        self.pwm_dict = {}
+        self.channels = {}
         self.channel = {}
         self.enabled = False
         self.inverted = False
@@ -35,26 +35,33 @@ class Pwm(object):
             if npwm == 1:
                 if ecap_index == 0:
                     i = 0
-                    self.pwm_dict[ecap_pwms[ecap_index]] = {'chip' : chip, 'port' : '{}'.format(i)} 
-                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ecap_pwms[ecap_index])                    
+                    chan_name = ecap_pwms[ecap_index]
+                    self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
+                    chan = self.channels[chan_name]
+                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 elif ecap_index == 1:
                     i = 2
-                    self.pwm_dict[ecap_pwms[ecap_index]] = {'chip' : chip, 'port' : '{}'.format(i)} 
-                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ecap_pwms[ecap_index])                    
+                    chan_name = ecap_pwms[ecap_index]
+                    self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
+                    chan = self.channels[chan_name]
+                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 else:
                     pass
                 ecap_index += 1
+                print
             elif npwm == 2:
                 for i in [0, 1]:
-                    self.pwm_dict[ehr_pwms[ehr_index+i]] = {'chip' : chip, 'port' : '{}'.format(i)} 
-                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ehr_pwms[ehr_index])
+                    chan_name = ehr_pwms[ehr_index+i]
+                    self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(i)}
+                    chan = self.channels[chan_name]
+                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 ehr_index += 2
                 print
             else:
                 print '(unrecognized chip npwm count)'
         
     def open(self, name):
-        self.channel = self.pwm_dict[name]
+        self.channel = self.channels[name]
         print '{}/export'.format(self.channel['chip']), self.channel['port']
         open('{}/export'.format(self.channel['chip']), 'w').write(self.channel['port'])
         self.opened = True
@@ -130,24 +137,24 @@ if __name__ == '__main__':
     import time
     
     pwm = Pwm()
-    #pwm.open('EHRPWM0B')
+    pwm.open('ECAPPWM0')
     
-    # pwm.is_inverted = False
-    # pwm.dutycycle = 0
-    # pwm.frequency = 1000
-    # pwm.is_enabled = True
-    # print pwm.enabled
+    pwm.is_inverted = False
+    pwm.dutycycle = 0
+    pwm.frequency = 1000
+    pwm.is_enabled = True
+    print pwm.enabled
 
-    # pwm.dutycycle = 0.0
-    # time.sleep(3)
-    # pwm.dutycycle = 50.0
-    # time.sleep(3)
-    # pwm.dutycycle = 99.0
-    # time.sleep(3)
-    # pwm.dutycycle = 10.0
-    # time.sleep(3)
+    pwm.dutycycle = 0.0
+    time.sleep(3)
+    pwm.dutycycle = 50.0
+    time.sleep(3)
+    pwm.dutycycle = 99.0
+    time.sleep(3)
+    pwm.dutycycle = 10.0
+    time.sleep(3)
 
-    # pwm.is_enabled = False
-    #pwm.close()
+    pwm.is_enabled = False
+    pwm.close()
     
 
