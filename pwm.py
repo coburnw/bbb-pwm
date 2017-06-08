@@ -11,13 +11,10 @@
 
 import os
 import glob
-from collections import OrderedDict
-
-import time
 
 class Pwm(object):
     def __init__(self):
-        self.pwm_dict = OrderedDict()
+        self.pwm_dict = {}
         self.channel = {}
         self.enabled = False
         self.inverted = False
@@ -26,24 +23,35 @@ class Pwm(object):
         self.scan()
         
     def scan(self):
-        ehrpwms = ['EHRPWM0A', 'EHRPWM0B', 'EHRPWM1A', 'EHRPWM1B', 'EHRPWM2A', 'EHRPWM2B']
-        ecappwms = ['ECAPPWM0', 'ECAPPWM2']
+        ecap_pwms = ['ECAPPWM0', 'ECAPPWM2']
+        ehr_pwms = ['EHRPWM0A', 'EHRPWM0B', 'EHRPWM1A', 'EHRPWM1B', 'EHRPWM2A', 'EHRPWM2B']
         path = '/sys/class/pwm'
         chips = glob.glob('{}/pwmchip*'.format(path))
-        nbpwm = 0
+        ecap_index = 0
+        ehr_index = 0
         for chip in chips:
-            print 'looking in: ' + '{}/npwm'.format(chip),
+            print 'looking in: ' + '{}/npwm'.format(chip)
             npwm = int(open('{}/npwm'.format(chip)).read())
             if npwm == 1:
-                pass
+                if ecap_index == 0:
+                    i = 0
+                    self.pwm_dict[ecap_pwms[ecap_index]] = {'chip' : chip, 'port' : '{}'.format(i)} 
+                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ecap_pwms[ecap_index])                    
+                elif ecap_index == 1:
+                    i = 2
+                    self.pwm_dict[ecap_pwms[ecap_index]] = {'chip' : chip, 'port' : '{}'.format(i)} 
+                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ecap_pwms[ecap_index])                    
+                else:
+                    pass
+                ecap_index += 1
             elif npwm == 2:
                 for i in [0, 1]:
-                    self.pwm_dict[ehrpwms[nbpwm+i]] = {'chip' : chip, 'port' : '{}'.format(i)} 
-                    print '(found {})'.format(i),
-                nbpwm += 2
+                    self.pwm_dict[ehr_pwms[ehr_index+i]] = {'chip' : chip, 'port' : '{}'.format(i)} 
+                    print ' (assigning {}/pwm{} to {})'.format(chip, i, ehr_pwms[ehr_index])
+                ehr_index += 2
                 print
             else:
-                print '(obscene pwm count)'
+                print '(unrecognized chip npwm count)'
         
     def open(self, name):
         self.channel = self.pwm_dict[name]
@@ -119,26 +127,27 @@ class Pwm(object):
         self.write(self.channel, 'duty_cycle', val)
 
 if __name__ == '__main__':
+    import time
     
     pwm = Pwm()
-    pwm.open('EHRPWM0A')
+    #pwm.open('EHRPWM0B')
     
-    pwm.is_inverted = False
-    pwm.dutycycle = 0
-    pwm.frequency = 1000
-    pwm.is_enabled = True
-    print pwm.enabled
+    # pwm.is_inverted = False
+    # pwm.dutycycle = 0
+    # pwm.frequency = 1000
+    # pwm.is_enabled = True
+    # print pwm.enabled
 
-    pwm.dutycycle = 0.0
-    time.sleep(3)
-    pwm.dutycycle = 50.0
-    time.sleep(3)
-    pwm.dutycycle = 99.0
-    time.sleep(3)
-    pwm.dutycycle = 10.0
-    time.sleep(3)
+    # pwm.dutycycle = 0.0
+    # time.sleep(3)
+    # pwm.dutycycle = 50.0
+    # time.sleep(3)
+    # pwm.dutycycle = 99.0
+    # time.sleep(3)
+    # pwm.dutycycle = 10.0
+    # time.sleep(3)
 
-    pwm.is_enabled = False
-    pwm.close()
+    # pwm.is_enabled = False
+    #pwm.close()
     
 
