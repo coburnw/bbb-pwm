@@ -26,21 +26,24 @@ class Pwm(object):
         self.scan()
         
     def scan(self):
-        pwms = ['PWM0A', 'PWM0B', 'PWM1A', 'PWM1B', 'PWM2A', 'PWM2B']
+        ehrpwms = ['EHRPWM0A', 'EHRPWM0B', 'EHRPWM1A', 'EHRPWM1B', 'EHRPWM2A', 'EHRPWM2B']
+        ecappwms = ['ECAPPWM0', 'ECAPPWM2']
         path = '/sys/class/pwm'
         chips = glob.glob('{}/pwmchip*'.format(path))
         nbpwm = 0
         for chip in chips:
             print 'looking in: ' + '{}/npwm'.format(chip),
             npwm = int(open('{}/npwm'.format(chip)).read())
-            if npwm == 2:
+            if npwm == 1:
+                pass
+            elif npwm == 2:
                 for i in [0, 1]:
-                    self.pwm_dict[pwms[nbpwm+i]] = {'chip' : chip, 'port' : '{}'.format(i)} 
+                    self.pwm_dict[ehrpwms[nbpwm+i]] = {'chip' : chip, 'port' : '{}'.format(i)} 
                     print '(found {})'.format(i),
                 nbpwm += 2
                 print
             else:
-                print '(skipped)'
+                print '(obscene pwm count)'
         
     def open(self, name):
         self.channel = self.pwm_dict[name]
@@ -118,7 +121,7 @@ class Pwm(object):
 if __name__ == '__main__':
     
     pwm = Pwm()
-    pwm.open('PWM0A')
+    pwm.open('EHRPWM0A')
     
     pwm.is_inverted = False
     pwm.dutycycle = 0
