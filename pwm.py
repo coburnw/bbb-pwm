@@ -41,7 +41,7 @@ class Pwm(object):
         ecap_index = 0
         ehr_index = 0
         for chip in chips:
-            print 'looking in: ' + '{}/npwm'.format(chip)
+            #print 'looking in: ' + '{}/npwm'.format(chip)
             npwm = int(open('{}/npwm'.format(chip)).read())
             if npwm == 1:
                 if ecap_index == 0:
@@ -49,37 +49,37 @@ class Pwm(object):
                     chan_name = ecap_pwms[ecap_index]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
                     chan = self.channels[chan_name]
-                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
+                    #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 elif ecap_index == 1:
                     i = 2
                     chan_name = ecap_pwms[ecap_index]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
                     chan = self.channels[chan_name]
-                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
+                    #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 else:
                     pass
                 ecap_index += 1
-                print
+                #print
             elif npwm == 2:
                 for i in [0, 1]:
                     chan_name = ehr_pwms[ehr_index+i]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(i)}
                     chan = self.channels[chan_name]
-                    print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
+                    #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 ehr_index += 2
-                print
+                #print
             else:
                 print '(unrecognized chip npwm count)'
         
     def open(self, name):
         self.channel = self.channels[name]
-        print '{}/export'.format(self.channel['chip']), self.channel['port']
+        #print '{}/export'.format(self.channel['chip']), self.channel['port']
         open('{}/export'.format(self.channel['chip']), 'w').write(self.channel['port'])
         self.opened = True
         
     def close(self):
         if self.opened:
-            print '{}/unexport'.format(self.channel['chip']), self.channel['port']
+            #print '{}/unexport'.format(self.channel['chip']), self.channel['port']
             open('{}/unexport'.format(self.channel['chip']), 'w').write(self.channel['port'])
         self.opened = False
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         pwm.dutycycle = 0
         pwm.frequency = 1000
         pwm.is_enabled = True
-        print pwm.enabled
+        print 'pwm enabled = {}'.format(pwm.enabled)
         
         pwm.dutycycle = 25.0
         time.sleep(2)
