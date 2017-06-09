@@ -13,14 +13,25 @@ import os
 import glob
 
 class Pwm(object):
-    def __init__(self):
+    def __init__(self, channelName):
         self.channels = {}
+        self.channel_name = channelName
         self.channel = {}
+        self.opened = False
+
         self.enabled = False
         self.inverted = False
         self.period = 10000000
         self.active_time = 0
+
+    def __enter__(self):
         self.scan()
+        self.open(self.channel_name)
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.is_enabled = False
+        self.close()
         
     def scan(self):
         ecap_pwms = ['ECAPPWM0', 'ECAPPWM2']
@@ -136,25 +147,22 @@ class Pwm(object):
 if __name__ == '__main__':
     import time
     
-    pwm = Pwm()
-    pwm.open('ECAPPWM0')
-    
-    pwm.is_inverted = False
-    pwm.dutycycle = 0
-    pwm.frequency = 1000
-    pwm.is_enabled = True
-    print pwm.enabled
-
-    pwm.dutycycle = 0.0
-    time.sleep(3)
-    pwm.dutycycle = 50.0
-    time.sleep(3)
-    pwm.dutycycle = 99.0
-    time.sleep(3)
-    pwm.dutycycle = 10.0
-    time.sleep(3)
-
-    pwm.is_enabled = False
-    pwm.close()
+    with Pwm('ECAPPWM0') as pwm:
+        pwm.is_inverted = False
+        pwm.dutycycle = 0
+        pwm.frequency = 1000
+        pwm.is_enabled = True
+        print pwm.enabled
+        
+        pwm.dutycycle = 25.0
+        time.sleep(2)
+        pwm.dutycycle = 50.0
+        time.sleep(2)
+        pwm.dutycycle = 75.0
+        time.sleep(2)
+        pwm.dutycycle = 95.0
+        time.sleep(2)
+        
+        pwm.is_enabled = False
     
 
