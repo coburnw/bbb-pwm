@@ -12,8 +12,11 @@
 import os
 import glob
 
-class Pwm(object):
+class PWM(object):
     def __init__(self, channelName):
+        self.ecap_pwms = ('ECAPPWM0', 'ECAPPWM2')
+        self.ehr_pwms = ('EHRPWM0A', 'EHRPWM0B', 'EHRPWM1A', 'EHRPWM1B', 'EHRPWM2A', 'EHRPWM2B')
+
         self.channels = {}
         self.channel_name = channelName
         self.channel = {}
@@ -24,18 +27,20 @@ class Pwm(object):
         self.period = 10000000
         self.active_time = 0
 
-    def __enter__(self):
         self.scan()
-        self.open(self.channel_name)
+        return
+
+    # allow using class as a context manager for more reliable cleanup
+    def __enter__(self):
+        self.open()
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
-        self.is_enabled = False
         self.close()
-        
+        return
+
+    # build relationship between the pwm resource names and their sysfs filenames
     def scan(self):
-        ecap_pwms = ['ECAPPWM0', 'ECAPPWM2']
-        ehr_pwms = ['EHRPWM0A', 'EHRPWM0B', 'EHRPWM1A', 'EHRPWM1B', 'EHRPWM2A', 'EHRPWM2B']
         path = '/sys/class/pwm'
         chips = glob.glob('{}/pwmchip*'.format(path))
         ecap_index = 0
@@ -46,13 +51,13 @@ class Pwm(object):
             if npwm == 1:
                 if ecap_index == 0:
                     i = 0
-                    chan_name = ecap_pwms[ecap_index]
+                    chan_name = self.ecap_pwms[ecap_index]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
                     chan = self.channels[chan_name]
                     #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
                 elif ecap_index == 1:
                     i = 2
-                    chan_name = ecap_pwms[ecap_index]
+                    chan_name = self.ecap_pwms[ecap_index]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(0)}
                     chan = self.channels[chan_name]
                     #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
@@ -62,7 +67,7 @@ class Pwm(object):
                 #print
             elif npwm == 2:
                 for i in [0, 1]:
-                    chan_name = ehr_pwms[ehr_index+i]
+                    chan_name = self.ehr_pwms[ehr_index+i]
                     self.channels[chan_name] = {'chip' : chip, 'port' : '{}'.format(i)}
                     chan = self.channels[chan_name]
                     #print ' (assigning {}/pwm{} to {})'.format(chan['chip'], chan['port'], chan_name)
@@ -70,18 +75,25 @@ class Pwm(object):
                 #print
             else:
                 print '(unrecognized chip npwm count)'
+        return
+
+    def open(self):
+        if not (self.channel_name in self.ecap_pwms) and not (self.channel_name in self.ehr_pwms):
+            raise KeyError('Undefined key. Possible keys are: {}'.format(self.ecap_pwms+self.ehr_pwms))
         
-    def open(self, name):
-        self.channel = self.channels[name]
+        self.channel = self.channels[self.channel_name]
         #print '{}/export'.format(self.channel['chip']), self.channel['port']
         open('{}/export'.format(self.channel['chip']), 'w').write(self.channel['port'])
         self.opened = True
-        
+        return
+
     def close(self):
         if self.opened:
+            self.is_enabled = False
             #print '{}/unexport'.format(self.channel['chip']), self.channel['port']
             open('{}/unexport'.format(self.channel['chip']), 'w').write(self.channel['port'])
         self.opened = False
+        return
 
     def write(self, channel, command, value):
         #print '{}/pwm{}/{}'.format(self.channel['chip'], self.channel['port'], command), value
@@ -90,7 +102,7 @@ class Pwm(object):
     @property
     def is_enabled(self):
         return self.enabled
-    
+
     @is_enabled.setter 
     def is_enabled(self, boolean):
         self.enabled = boolean
@@ -99,11 +111,12 @@ class Pwm(object):
         else:
             state = '0'
         self.write(self.channel, 'enable', state)
+        return
 
     @property
     def is_inverted(self):
         return self.inverted
-    
+
     @is_inverted.setter 
     def is_inverted(self, boolean):
         self.inverted = boolean
@@ -112,11 +125,12 @@ class Pwm(object):
         else:
             state = 'normal'
         self.write(self.channel, 'polarity', state)
+        return
 
     @property
     def frequency(self):
         return 1/self.period
-    
+
     @frequency.setter
     def frequency(self, hertz):
         if hertz < 1:
@@ -127,11 +141,12 @@ class Pwm(object):
         self.period = 1.0/float(hertz)
         val = '{}'.format(int(self.period * 1e9))
         self.write(self.channel, 'period', val)
+        return
 
     @property
     def dutycycle(self):
         return self.active_time / self.period * 100
-    
+
     @dutycycle.setter
     def dutycycle(self, percent):
         if percent < 0.0:
@@ -143,11 +158,37 @@ class Pwm(object):
         self.active_time = nanoseconds
         val = '{}'.format(nanoseconds)
         self.write(self.channel, 'duty_cycle', val)
+        return
 
 if __name__ == '__main__':
     import time
-    
-    with Pwm('ECAPPWM0') as pwm:
+
+    # use the pwm class as a simple object
+    pwm = PWM('ECAPPWM0')
+    pwm.open()
+    pwm.is_inverted = False
+    pwm.dutycycle = 0
+    pwm.frequency = 1000
+    pwm.is_enabled = True
+    print 'pwm enabled = {}'.format(pwm.enabled)
+        
+    pwm.dutycycle = 25.0
+    time.sleep(2)
+    pwm.dutycycle = 50.0
+    time.sleep(2)
+    pwm.dutycycle = 75.0
+    time.sleep(2)
+    pwm.dutycycle = 95.0
+    time.sleep(2)
+
+    # do clean up.
+    pwm.is_enabled = False
+    pwm.close()
+
+    time.sleep(1)
+
+    # use the pwm class as a context manager
+    with PWM('ECAPPWM0') as pwm:
         pwm.is_inverted = False
         pwm.dutycycle = 0
         pwm.frequency = 1000
@@ -163,6 +204,7 @@ if __name__ == '__main__':
         pwm.dutycycle = 95.0
         time.sleep(2)
         
-        pwm.is_enabled = False
-    
+    # try opening a non existent pwm resource 
+    with PWM('ECAPPWM1') as pwm:
+        pwm.is_inverted = False
 
