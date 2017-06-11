@@ -96,6 +96,7 @@ class PWM(linux_pwm.PWM):
 
         devices = {}
         chips = glob.glob('{}/pwmchip*'.format(self.root))
+        # print chips
         ecap_index = 0
         ehr_index = 0
         for chip in chips:
@@ -135,7 +136,7 @@ class PWM(linux_pwm.PWM):
             else:
                 print '(unrecognized chip npwm count)'
 
-            device = devices[device_name]
+        device = devices[device_name]
         return (device['chip'], device['channel'])
 
     @property
@@ -161,8 +162,8 @@ if __name__ == '__main__':
     pwm = PWM('ECAPPWM0')
     pwm.export()
     print 'driving {}: chip{} pwm{}'.format(pwm.name, pwm.chip, pwm.channel)
-    pwm.period = 1000000
-    pwm.duty_cycle = 100000
+    pwm.period = int(1e9 / 1000)
+    pwm.duty_cycle = int(pwm.period * 0.25)
     pwm.enable = True
     time.sleep(2)
     pwm.enable = False
