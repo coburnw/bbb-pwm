@@ -1,5 +1,5 @@
 # bbb-pwm
-###python pwm for the beaglebone black###
+### python pwm for the beaglebone black ###
 
 This PWM library overrides the hardware specifics of pwmpy to allow its use with the BeagleBone Black.
 
@@ -10,14 +10,14 @@ device names rather than the chip/channel definitions.
 The little snippit of code that adapts to the shifting filenames is thanks to samual.bucquet.
 The rest is just dressing.
 
-###dependencies:###
+### dependencies: ###
 Scott's [pwmpy](https://github.com/scottellis/pwmpy) class which handles the sysfs interface.
 
-###installation:###
+### installation: ###
  * copy pmwpy.py to your work folder.
  * copy bbb_pwm.py to your work folder.
 
-###two methods of use are:###
+### two methods of use are: ###
  * as a class
    ```
    import bbb_pwm
@@ -39,7 +39,7 @@ exception should happen to trickle to the top.
 
 See cape expansion [headers](http://elinux.org/Beagleboard:Cape_Expansion_Headers#8_PWMs_and_4_Timers) for pwm device names.
 
-###caveat:###
+### caveat: ###
 this library assumes that altho the pwmchip file suffix values may change, the order of the pwmchip
 filenames does not.
 
