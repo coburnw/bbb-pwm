@@ -145,7 +145,7 @@ class PWM(linux_pwm.PWM):
         with open(self.path + '/polarity', 'r') as f:
             value = f.readline().strip()
 
-        return True if value == '1' else False
+        return True if value == 'inversed' else False
 
     @inversed.setter
     def inversed(self, value):
@@ -164,6 +164,8 @@ if __name__ == '__main__':
     print 'driving {}: chip{} pwm{}'.format(pwm.name, pwm.chip, pwm.channel)
     pwm.period = int(1e9 / 1000)
     pwm.duty_cycle = int(pwm.period * 0.25)
+    pwm.inversed = False
+    print 'inversed is {}'.format(pwm.inversed)
     pwm.enable = True
     time.sleep(2)
     pwm.enable = False
@@ -173,14 +175,15 @@ if __name__ == '__main__':
     
     # use the pwm class as a context manager
     with PWM('ECAPPWM0') as pwm:
-        pwm.period = 1000000
-        pwm.duty_cycle = 100000
+        pwm.period = int(1e9 / 1000)
+        pwm.duty_cycle = int(pwm.period * 0.25)
         pwm.inversed = True
+        print 'inversed is {}'.format(pwm.inversed)
         pwm.enable = True
         time.sleep(2)
 
-        pwm.period = 1000000
-        pwm.duty_cycle = 900000
+        pwm.period = int(1e9 / 1000)
+        pwm.duty_cycle = int(pwm.period * 0.9)
         time.sleep(2)
 
     # try an non-existent pwm device name
