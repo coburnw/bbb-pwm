@@ -3,9 +3,9 @@
 
 This PWM library overrides the hardware specifics of pwmpy to allow its use with the BeagleBone Black.
 
-On BBB, the PWM related sysfs filenames in version 4.4 of the linux kernel (and others?) can sometimes change
-after reboot.  This library sorts the filenames out and allows access to the pwm devices with pwmpy using
-device names rather than the chip/channel definitions.
+On BBB, the PWM related sysfs filenames in version 4.4 (and others?) of the linux kernel can sometimes change
+with reboot.  This library sorts out the sysfs filenames and allows access to the pwm devices using pwmpy by
+device name rather than chip/channel definition.
 
 The little snippit of code that adapts to the shifting filenames is thanks to samual.bucquet.
 The rest is just dressing.
@@ -25,7 +25,8 @@ Scott's [pwmpy](https://github.com/scottellis/pwmpy) class which handles the sys
    ```
    The user mananges the opening and closing of the resource and handles any events appropriately
    to ensure the pwm device is left in the state desired on program exit.
- * as a context handler
+
+* as a context handler
    ```
    import bbb_pwm
    with bbb_pwm.PWM("EHRPWM0A") as pwm:
@@ -45,4 +46,4 @@ filenames does not.
 
 TODO:
  * verify caveat assumption is a safe assumption.
-  
+ 

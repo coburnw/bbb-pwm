@@ -3,8 +3,10 @@
 import os
 import glob
 
-# we overload init from https://github.com/scottellis/pwmpy to find_pwm's on beaglebone black
 import pwmpy as linux_pwm
+
+# import pwmpy from https://github.com/scottellis/pwmpy
+# override __init__ to find_pwm devices on beaglebone black instead of rpi
 
 __author__ = 'Coburn Wightman'
 __version__ = '0.1'
@@ -56,17 +58,6 @@ class PWM(linux_pwm.PWM):
 
         return
 
-    # allow using class as a context manager for more reliable cleanup
-    def __enter__(self):
-        self.export()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.enable = False
-        self.inversed = False
-        self.unexport()
-        return
-
     @property
     def name(self):
         """The pwm device name used by this instance.
@@ -74,11 +65,6 @@ class PWM(linux_pwm.PWM):
         """
         return self.device_name
         
-    # build relationship between the pwm device names and their sysfs filenames
-    #
-    # Based on work by samuel . bucquet Tue, 13 Sep 2016 05:49:33 -0700
-    # https://groups.google.com/forum/#!msg/beagleboard/u9We3y-yrZc/z1dKE4F-BQAJ
-    #
     def find_pwm(self, device_name):
         """ build relationship between the pwm device names and their sysfs filenames
         returns integer tuple of chip and channel of the requested pwm device
@@ -139,21 +125,6 @@ class PWM(linux_pwm.PWM):
         device = devices[device_name]
         return (device['chip'], device['channel'])
 
-    @property
-    def inversed(self):
-        """normal polarity or inversed, boolean"""
-        with open(self.path + '/polarity', 'r') as f:
-            value = f.readline().strip()
-
-        return True if value == 'inversed' else False
-
-    @inversed.setter
-    def inversed(self, value):
-        with open(self.path + '/polarity', 'w') as f:
-            if value:
-                f.write('inversed')
-            else:
-                f.write('normal')
 
 if __name__ == '__main__':
     import time
@@ -162,10 +133,13 @@ if __name__ == '__main__':
     pwm = PWM('ECAPPWM0')
     pwm.export()
     print 'driving {}: chip{} pwm{}'.format(pwm.name, pwm.chip, pwm.channel)
+
+    # setup for 1000 hz, 25% active time, active High
     pwm.period = int(1e9 / 1000)
     pwm.duty_cycle = int(pwm.period * 0.25)
     pwm.inversed = False
     print 'inversed is {}'.format(pwm.inversed)
+
     pwm.enable = True
     time.sleep(2)
     pwm.enable = False
@@ -175,21 +149,21 @@ if __name__ == '__main__':
     
     # use the pwm class as a context manager
     with PWM('ECAPPWM0') as pwm:
+        # setup for 1000 hz, 25% active time, active Low
         pwm.period = int(1e9 / 1000)
         pwm.duty_cycle = int(pwm.period * 0.25)
         pwm.inversed = True
         print 'inversed is {}'.format(pwm.inversed)
+        
         pwm.enable = True
         time.sleep(2)
-
-        pwm.period = int(1e9 / 1000)
         pwm.duty_cycle = int(pwm.period * 0.9)
         time.sleep(2)
 
-    # try an non-existent pwm device name
+    # try a non-existent pwm device name
     with PWM('ECAPPWM1') as pwm:
-        pwm.period = 1000000
-        pwm.duty_cycle = 100000
-        pwm.inversed = True
+        pwm.period = int(1e9 / 1000)
+        pwm.duty_cycle = int(pwm.period * 0.25)
+        pwm.inversed = False
         pwm.enable = True
         time.sleep(2)
