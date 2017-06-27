@@ -1,9 +1,11 @@
 """BeagleBone Black specific PWM driver sysfs interface"""
 
+import sys
 import os
 import glob
 
-import pwmpy as linux_pwm
+sys.path.append(os.path.abspath(".."))
+import pwmpy.pwm as linux_pwm
 
 # import pwmpy from https://github.com/scottellis/pwmpy
 # override __init__ to find_pwm devices on beaglebone black instead of rpi
